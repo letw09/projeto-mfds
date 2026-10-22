@@ -2,26 +2,36 @@ import {
   CalendarDays,
   CheckCircle2,
   Circle,
+  Edit3,
   Flag,
   Plus,
+  Trash2,
 } from "lucide-react";
 import {
   useEffect,
   useMemo,
   useState,
 } from "react";
+
 import {
   getProjects,
   type StoredProject,
 } from "../services/projectService";
+
 import {
   createTask,
+  deleteTask,
   getTasks,
+  updateTask,
 } from "../services/taskService";
+
 import type {
   Task,
   TaskPriority,
 } from "../types/task";
+
+import { DeleteTaskModal } from "../components/tasks/DeleteTaskModal";
+
 import { TaskFormModal } from "../components/tasks/TaskFormModal";
 
 export function TasksPage() {
@@ -31,8 +41,14 @@ export function TasksPage() {
   const [projects, setProjects] =
     useState<StoredProject[]>([]);
 
-  const [isModalOpen, setIsModalOpen] =
+  const [isFormOpen, setIsFormOpen] =
     useState(false);
+
+  const [taskBeingEdited, setTaskBeingEdited] =
+    useState<Task | null>(null);
+
+  const [taskBeingDeleted, setTaskBeingDeleted] =
+    useState<Task | null>(null);
 
   const [successMessage, setSuccessMessage] =
     useState("");
@@ -56,13 +72,67 @@ export function TasksPage() {
     );
   }, [projects]);
 
-  function handleCreateTask(
+  function showSuccessMessage(
+    message: string,
+  ) {
+    setSuccessMessage(message);
+
+    window.setTimeout(() => {
+      setSuccessMessage("");
+    }, 3500);
+  }
+
+  function handleOpenCreate() {
+    setTaskBeingEdited(null);
+    setIsFormOpen(true);
+  }
+
+  function handleOpenEdit(task: Task) {
+    setTaskBeingEdited(task);
+    setIsFormOpen(true);
+  }
+
+  function handleCloseForm() {
+    setIsFormOpen(false);
+    setTaskBeingEdited(null);
+  }
+
+  function handleSubmitTask(
     projectId: string,
     title: string,
     description: string,
     priority: TaskPriority,
     dueDate: string,
   ) {
+    if (taskBeingEdited) {
+      const updatedTask = updateTask(
+        taskBeingEdited.id,
+        {
+          projectId,
+          title,
+          description,
+          priority,
+          dueDate,
+        },
+      );
+
+      if (!updatedTask) {
+        showSuccessMessage(
+          "Não foi possível atualizar a tarefa.",
+        );
+        return;
+      }
+
+      setTasks(getTasks());
+      handleCloseForm();
+
+      showSuccessMessage(
+        "Tarefa atualizada com sucesso.",
+      );
+
+      return;
+    }
+
     createTask({
       projectId,
       title,
@@ -72,15 +142,38 @@ export function TasksPage() {
     });
 
     setTasks(getTasks());
-    setIsModalOpen(false);
+    handleCloseForm();
 
-    setSuccessMessage(
+    showSuccessMessage(
       "Tarefa criada com sucesso.",
     );
+  }
 
-    window.setTimeout(() => {
-      setSuccessMessage("");
-    }, 3500);
+  function handleConfirmDelete() {
+    if (!taskBeingDeleted) {
+      return;
+    }
+
+    const deleted = deleteTask(
+      taskBeingDeleted.id,
+    );
+
+    if (!deleted) {
+      showSuccessMessage(
+        "Não foi possível excluir a tarefa.",
+      );
+
+      setTaskBeingDeleted(null);
+
+      return;
+    }
+
+    setTasks(getTasks());
+    setTaskBeingDeleted(null);
+
+    showSuccessMessage(
+      "Tarefa excluída com sucesso.",
+    );
   }
 
   return (
@@ -95,17 +188,16 @@ export function TasksPage() {
             <h2>Tarefas</h2>
 
             <p className="page-description">
-              Registre as atividades que precisam
-              ser realizadas nos seus projetos.
+              Registre, atualize e mantenha
+              organizadas as atividades dos
+              seus projetos.
             </p>
           </div>
 
           <button
             type="button"
             className="primary-button"
-            onClick={() =>
-              setIsModalOpen(true)
-            }
+            onClick={handleOpenCreate}
           >
             <Plus size={18} />
             Nova tarefa
@@ -124,9 +216,7 @@ export function TasksPage() {
 
         {tasks.length === 0 ? (
           <EmptyTasksState
-            onCreate={() =>
-              setIsModalOpen(true)
-            }
+            onCreate={handleOpenCreate}
           />
         ) : (
           <div className="tasks-list">
@@ -140,6 +230,12 @@ export function TasksPage() {
                   ) ??
                   "Projeto não encontrado"
                 }
+                onEdit={() =>
+                  handleOpenEdit(task)
+                }
+                onDelete={() =>
+                  setTaskBeingDeleted(task)
+                }
               />
             ))}
           </div>
@@ -147,12 +243,26 @@ export function TasksPage() {
       </section>
 
       <TaskFormModal
-        isOpen={isModalOpen}
+        isOpen={isFormOpen}
         projects={projects}
-        onClose={() =>
-          setIsModalOpen(false)
+        task={taskBeingEdited}
+        onClose={handleCloseForm}
+        onSubmit={handleSubmitTask}
+      />
+
+      <DeleteTaskModal
+        isOpen={
+          taskBeingDeleted !== null
         }
-        onSubmit={handleCreateTask}
+        taskTitle={
+          taskBeingDeleted?.title
+        }
+        onCancel={() =>
+          setTaskBeingDeleted(null)
+        }
+        onConfirm={
+          handleConfirmDelete
+        }
       />
     </>
   );
@@ -161,11 +271,15 @@ export function TasksPage() {
 interface TaskCardProps {
   task: Task;
   projectName: string;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
 function TaskCard({
   task,
   projectName,
+  onEdit,
+  onDelete,
 }: TaskCardProps) {
   return (
     <article className="task-card">
@@ -196,7 +310,10 @@ function TaskCard({
 
         <div className="task-card-meta">
           <span>
-            <Circle size={7} fill="currentColor" />
+            <Circle
+              size={7}
+              fill="currentColor"
+            />
             {task.status}
           </span>
 
@@ -211,6 +328,28 @@ function TaskCard({
             ID: {task.id.slice(0, 14)}...
           </span>
         </div>
+      </div>
+
+      <div className="task-card-actions">
+        <button
+          type="button"
+          className="task-action-button"
+          onClick={onEdit}
+          aria-label={`Editar tarefa ${task.title}`}
+          title="Editar tarefa"
+        >
+          <Edit3 size={15} />
+        </button>
+
+        <button
+          type="button"
+          className="task-action-button task-delete-button"
+          onClick={onDelete}
+          aria-label={`Excluir tarefa ${task.title}`}
+          title="Excluir tarefa"
+        >
+          <Trash2 size={15} />
+        </button>
       </div>
     </article>
   );

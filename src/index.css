@@ -1370,3 +1370,156 @@ button {
       max-height: calc(100vh - 30px);
    }
 }
+
+.task-card {
+  position: relative;
+}
+
+.task-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.task-action-button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.task-action-button:hover {
+  color: #2563eb;
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.task-delete-button:hover {
+  color: #dc2626;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.delete-modal {
+  width: min(100%, 450px);
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow:
+    0 25px 70px rgba(15, 23, 42, 0.2);
+}
+
+.delete-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 22px 22px 0;
+}
+
+.delete-warning-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  color: #dc2626;
+  background: #fef2f2;
+  border-radius: 12px;
+}
+
+.delete-modal-content {
+  padding: 18px 22px 22px;
+}
+
+.delete-modal-content h2 {
+  margin: 0 0 9px;
+  color: #1e293b;
+  font-size: 18px;
+}
+
+.delete-modal-content p {
+  margin: 7px 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.delete-modal-content strong {
+  display: block;
+  margin: 10px 0;
+  color: #334155;
+  font-size: 13px;
+}
+
+.delete-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding: 16px 22px 22px;
+  border-top: 1px solid #eef2f7;
+}
+
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 14px;
+  color: #ffffff;
+  background: #dc2626;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.danger-button:hover {
+  background: #b91c1c;
+}
+
+.danger-button:active {
+  transform: translateY(1px);
+}
+
+@media (max-width: 720px) {
+  .task-card {
+    flex-wrap: wrap;
+  }
+
+  .task-card-main {
+    width: calc(100% - 50px);
+  }
+
+  .task-card-actions {
+    width: 100%;
+    padding-left: 49px;
+  }
+
+  .task-action-button {
+    flex: 1;
+  }
+
+  .delete-modal {
+    width: calc(100% - 30px);
+  }
+
+  .delete-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .delete-modal-actions button {
+    width: 100%;
+  }
+}

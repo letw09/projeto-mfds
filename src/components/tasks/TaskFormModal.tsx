@@ -1,17 +1,21 @@
 import {
-  type FormEvent,
+ type FormEvent,
   useEffect,
   useState,
 } from "react";
 import { X } from "lucide-react";
 import type {
+  Task,
   TaskPriority,
 } from "../../types/task";
-import type { StoredProject } from "../../services/projectService";
+import type {
+  StoredProject,
+} from "../../services/projectService";
 
 interface TaskFormModalProps {
   isOpen: boolean;
   projects: StoredProject[];
+  task?: Task | null;
   onClose: () => void;
   onSubmit: (
     projectId: string,
@@ -25,6 +29,7 @@ interface TaskFormModalProps {
 export function TaskFormModal({
   isOpen,
   projects,
+  task,
   onClose,
   onSubmit,
 }: TaskFormModalProps) {
@@ -46,18 +51,29 @@ export function TaskFormModal({
   const [error, setError] =
     useState("");
 
+  const isEditing = Boolean(task);
+
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
-    setProjectId(projects[0]?.id ?? "");
-    setTitle("");
-    setDescription("");
-    setPriority("Média");
-    setDueDate("");
+    if (task) {
+      setProjectId(task.projectId);
+      setTitle(task.title);
+      setDescription(task.description);
+      setPriority(task.priority);
+      setDueDate(task.dueDate);
+    } else {
+      setProjectId(projects[0]?.id ?? "");
+      setTitle("");
+      setDescription("");
+      setPriority("Média");
+      setDueDate("");
+    }
+
     setError("");
-  }, [isOpen, projects]);
+  }, [isOpen, task, projects]);
 
   if (!isOpen) {
     return null;
@@ -119,7 +135,9 @@ export function TaskFormModal({
             </span>
 
             <h2 id="task-modal-title">
-              Nova tarefa
+              {isEditing
+                ? "Editar tarefa"
+                : "Nova tarefa"}
             </h2>
           </div>
 
@@ -275,7 +293,9 @@ export function TaskFormModal({
               type="submit"
               className="primary-button"
             >
-              Criar tarefa
+              {isEditing
+                ? "Salvar alterações"
+                : "Criar tarefa"}
             </button>
           </div>
         </form>

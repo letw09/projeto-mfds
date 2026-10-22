@@ -79,3 +79,59 @@ export function createTask(
 
   return newTask;
 }
+
+export function updateTask(
+  taskId: string,
+  data: CreateTaskData,
+): Task | null {
+  const tasks = readTasks();
+
+  const taskIndex = tasks.findIndex(
+    (task) => task.id === taskId,
+  );
+
+  if (taskIndex === -1) {
+    return null;
+  }
+
+  const currentTask = tasks[taskIndex];
+
+  const updatedTask: Task = {
+    ...currentTask,
+    projectId: data.projectId,
+    title: data.title.trim(),
+    description: data.description.trim(),
+    priority: data.priority,
+    dueDate: data.dueDate,
+  };
+
+  const updatedTasks = [...tasks];
+
+  updatedTasks[taskIndex] = updatedTask;
+
+  writeTasks(updatedTasks);
+
+  return updatedTask;
+}
+
+export function deleteTask(
+  taskId: string,
+): boolean {
+  const tasks = readTasks();
+
+  const taskExists = tasks.some(
+    (task) => task.id === taskId,
+  );
+
+  if (!taskExists) {
+    return false;
+  }
+
+  const updatedTasks = tasks.filter(
+    (task) => task.id !== taskId,
+  );
+
+  writeTasks(updatedTasks);
+
+  return true;
+}
